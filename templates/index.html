@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Signal Time Estimator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <!-- Header with Traffic Light Icon and Title -->
+        <div class="d-flex align-items-center mb-4">
+            <img src="static/traffic-light.svg" alt="Traffic Light Icon" style="width: 50px; height: auto;">
+            <h2 class="ms-3 mb-0">Traffic Signal Time Estimator</h2>
+        </div>
+
+        <div class="card p-4 shadow">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="image" class="form-label">Upload an image:</label>
+                    <input type="file" class="form-control" id="image" name="file" accept="image/*" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-25 mx-auto mb-3 d-block">Submit</button>
+            </form>
+            <div id="loading" class="mt-3 text-center" style="display:none;">
+                <div class="spinner-border" role="status"></div>
+                <p>Processing...</p>
+            </div>
+            <div id="result" class="mt-5" style="display:none; justify-content: space-between; align-items: flex-start;">
+                <!-- Left side: Estimated Signal Time and Traffic Light -->
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                    <h4>Estimated Signal Time: <span id="signalTime"></span> seconds</h4>
+                    
+                    <!-- Dynamic Traffic Light SVG -->
+                    <div id="trafficLight" style="display: flex; justify-content: center;">
+                        
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="250" viewBox="0 0 100 250">
+                            <rect x="25" y="30" width="50" height="200" rx="15" ry="15" fill="black"/>
+                            <circle id="redLight" cx="50" cy="55" r="20" fill="gray"/>
+                            <circle id="yellowLight" cx="50" cy="125" r="20" fill="gray"/>
+                            <circle id="greenLight" cx="50" cy="195" r="20" fill="green"/>
+                        </svg>
+                    </div>
+                    <h5><span id="signalTimer" style="color: green;"></span></h5>
+                </div>
+
+                <!-- Right side: Output Image -->
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                    <h4>Image with Object Detections</h4>
+                    <img id="outputImage" class="img-fluid mt-3" style="max-height: 500px;" />
+                </div>
+            </div>
+            <div id="error" class="mt-3 alert alert-danger text-center" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let activeTimers = [];  // Store active timers to clear them when needed
+        let activeTimeouts = [];  // Store active timers to clear them when needed
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            const file = document.getElementById('image').files[0];
+            formData.append('file', file);
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('signalTime').innerText = data.time;
+                    document.getElementById('outputImage').src = `data:image/png;base64,${data.image}`;
+                    document.getElementById('result').style.display = 'flex';
+
+                    clearAllTimersandTimeouts();
+
+                    // Countdown timer starting from data.time
+                    let timer = data.time;  // Start timer from data.time
+                    const signalTimerElement = document.getElementById('signalTimer');
+
+                    // Update the signalTimer span every second
+                    let timerInterval = setInterval(() => {
+                        signalTimerElement.innerText = timer; // Update the span with the current timer value
+                        timer--; // Decrease timer by 1
+
+                        // When the timer reaches 0, stop the countdown and hide the timer
+                        if (timer < 0) {
+                            clearInterval(timerInterval); // Stop the timer
+                            signalTimerElement.style.display = 'none'; // Hide the timer
+                        }
+                    }, 1000); // Update every 1 second
+                    // Update traffic light color based on the time
+                    activeTimers.push(timerInterval);
+                    updateTrafficLightColor(data.time);
+                } else {
+                    throw new Error(data.error || 'Failed to process image');
+                }
+            } catch (err) {
+                document.getElementById('error').innerText = err.message;
+                document.getElementById('error').style.display = 'block';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+
+        function updateTrafficLightColor(time) {
+            // Reset all lights to gray
+            document.getElementById('redLight').setAttribute('fill', 'gray');
+            document.getElementById('yellowLight').setAttribute('fill', 'gray');
+            document.getElementById('greenLight').setAttribute('fill', 'gray');
+
+            // Calculate times
+            const greenTime = time - 5;  // Green light duration
+            const yellowTime = 5;        // Yellow light duration (last 5 seconds)
+            
+            // Set the green light on for the greenTime, blinking
+            let greenBlinkingInterval = setInterval(() => {
+                let greenFill = document.getElementById('greenLight').getAttribute('fill') === 'green' ? 'gray' : 'green';
+                document.getElementById('greenLight').setAttribute('fill', greenFill);
+            }, 500);  // Blink every 500ms (half a second)
+            activeTimers.push(greenBlinkingInterval);
+
+            // After green time passes, stop the blinking and turn on yellow light
+            let greenLightTimeout = setTimeout(() => {
+                clearInterval(greenBlinkingInterval);  // Stop the blinking
+                document.getElementById('greenLight').setAttribute('fill', 'gray');  // Turn off green
+                document.getElementById('yellowLight').setAttribute('fill', 'yellow');  // Turn on yellow light
+
+                // Make the yellow light blink
+                let yellowBlinkingInterval = setInterval(() => {
+                    let yellowFill = document.getElementById('yellowLight').getAttribute('fill') === 'yellow' ? 'gray' : 'yellow';
+                    document.getElementById('yellowLight').setAttribute('fill', yellowFill);
+                }, 500);  // Blink every 500ms
+                activeTimers.push(yellowBlinkingInterval);
+
+                // After yellow light duration (5 seconds), turn on red light
+                let yellowLightTimeout = setTimeout(() => {
+                    clearInterval(yellowBlinkingInterval);  // Stop yellow blinking
+                    document.getElementById('yellowLight').setAttribute('fill', 'gray');  // Turn off yellow
+                    document.getElementById('redLight').setAttribute('fill', 'red');  // Turn on red light
+                }, yellowTime * 1000);  // Yellow light lasts for 5 seconds
+                activeTimeouts.push(yellowLightTimeout)
+            }, greenTime * 1000);  // Wait for the green light to turn off
+            activeTimeouts.push(greenLightTimeout)
+        }
+
+        function clearAllTimersandTimeouts() {
+            // Clear all active timers
+            activeTimers.forEach(timer => clearInterval(timer));  // Clear all intervals
+            activeTimers = [];  // Reset the timers array
+            activeTimeouts.forEach(timeout => clearTimeout(timeout));
+            activeTimeouts = []; // Reset the timeouts array
+        }
+    </script>
+</body>
+</html>
