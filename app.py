@@ -58,7 +58,9 @@ def process_image():
         total_detections = sum(counts.values())
 
         # Determine time based on detections
-        if total_detections <= 5:
+        if total_detections == 0:
+            time = 0
+        elif total_detections <= 5 and total_detections > 0:
             time = 30
         elif total_detections <= 10:
             time = 50
