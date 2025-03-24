@@ -1,5 +1,4 @@
-# Use a base image with the required libs pre-installed
-FROM nvidia/cuda:12.2.2-runtime-ubuntu20.04
+FROM python:3.12-slim
 
 # Install system dependencies (including libGL)
 RUN apt-get update && apt-get install -y \
