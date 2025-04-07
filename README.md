@@ -1,3 +1,6 @@
+# Demo
+https://trafficapp-production.up.railway.app/
+
 # Project Installation Instructions
 **1. Clone the project from the github repo**<br/>
 https://github.com/unnit/traffic_app
