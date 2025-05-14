@@ -1,41 +1,36 @@
-name: Deploy Traffic App to EC2 via Docker
+name: Deploy Traffic App App to EC2
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.EC2_KEY }}
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.EC2_KEY }}
 
-      - name: Deploy to EC2 and run Docker container
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            # Clone or pull the latest code
-            if [ ! -d /home/ec2-user/traffic_app ]; then
-              git clone https://github.com/YOUR_USERNAME/traffic_app.git /home/ec2-user/traffic_app
-            else
-              cd /home/ec2-user/traffic_app && git pull origin main
-            fi
+    - name: Copy files to EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+          sudo mkdir -p /home/ec2-user/${{ secrets.APP_NAME }}
+        EOF
 
-            # Navigate to app directory
-            cd /home/ec2-user/traffic_app
+        scp -o StrictHostKeyChecking=no -r ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ec2-user/${{ secrets.APP_NAME }}
 
-            # Stop and remove old container
-            docker stop traffic_app || true
-            docker rm traffic_app || true
-
-            # Build and run new container
-            docker build -t traffic_app .
-            docker run -d --name traffic_app -p 5001:5000 traffic_app
-          EOF
+    - name: Build and restart Docker container on EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+          cd /home/ec2-user/${{ secrets.APP_NAME }}
+          docker stop traffic_app || true
+          docker rm traffic_app || true
+          docker build -t traffic_app .
+          docker run -d --name traffic_app -p 5002:5002 traffic_app
+        EOF
