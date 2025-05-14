@@ -1,5 +1,5 @@
 # Demo
-https://trafficapp-production.up.railway.app/
+https://traffic.dtlabs.me
 
 # Project Installation Instructions
 **1. Clone the project from the github repo**<br/>
