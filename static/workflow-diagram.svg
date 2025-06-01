@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="200" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="200" fill="none" />
+
+  <!-- Arrows -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4B5563" />
+    </marker>
+  </defs>
+
+  <!-- Flow Lines -->
+  <path d="M80,100 L170,100" stroke="#4B5563" stroke-width="2" marker-end="url(#arrowhead)" fill="none" />
+  <path d="M230,100 L320,100" stroke="#4B5563" stroke-width="2" marker-end="url(#arrowhead)" fill="none" />
+
+  <!-- Boxes with Centered Text -->
+  <g font-family="Inter, sans-serif" font-size="12" fill="#1F2937">
+    <!-- Input Box -->
+    <rect x="20" y="70" width="60" height="60" rx="8" fill="#E5E7EB" stroke="#4B5563" stroke-width="2" />
+    <text x="50" y="98" text-anchor="middle" dominant-baseline="middle">
+      <tspan x="50" dy="-6">Input</tspan>
+      <tspan x="50" dy="14">Image</tspan>
+    </text>
+
+    <!-- AI Analysis Box -->
+    <rect x="170" y="70" width="60" height="60" rx="8" fill="#DBEAFE" stroke="#4B5563" stroke-width="2" />
+    <text x="200" y="98" text-anchor="middle" dominant-baseline="middle">
+      <tspan x="200" dy="-6">AI</tspan>
+      <tspan x="200" dy="14">Analysis</tspan>
+    </text>
+
+    <!-- Signal Timing Box -->
+    <rect x="320" y="70" width="60" height="60" rx="8" fill="#D1FAE5" stroke="#4B5563" stroke-width="2" />
+    <text x="350" y="98" text-anchor="middle" dominant-baseline="middle">
+      <tspan x="350" dy="-6">Signal</tspan>
+      <tspan x="350" dy="14">Timing</tspan>
+    </text>
+  </g>
+</svg>
