@@ -27,6 +27,6 @@ jobs:
           cd /home/ec2-user/${{ secrets.APP_NAME }}
           docker stop traffic_app || true
           docker rm traffic_app || true
-          docker build -t traffic_app .
+          docker build --no-cache -t traffic_app .
           docker run -d --name traffic_app -p 5002:5002 traffic_app
         EOF
