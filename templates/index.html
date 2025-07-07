@@ -333,6 +333,15 @@
                     body: formData
                 });
 
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    // If not JSON, get the text to see what error occurred
+                    const errorText = await response.text();
+                    console.error('Server returned non-JSON response:', errorText);
+                    throw new Error(`Server error (${response.status}): ${response.statusText}. Please try with a smaller image or contact support.`);
+                }
+
                 const data = await response.json();
 
                 if (response.ok) {

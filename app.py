@@ -9,6 +9,7 @@ import numpy as np
 from ultralytics import YOLO
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
 model = YOLO('yolov8n.pt')
 
 # Define class mappings
@@ -41,10 +42,29 @@ def process_image():
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
+    # Check file size (10MB limit)
+    file.seek(0, 2)  # Seek to end
+    file_size = file.tell()
+    file.seek(0)  # Reset to beginning
+    
+    if file_size > 10 * 1024 * 1024:  # 10MB
+        return jsonify({'error': 'File size too large. Maximum size is 10MB.'}), 413
+
+    # Check file type
+    allowed_extensions = {'.png', '.jpg', '.jpeg', '.webp'}
+    file_extension = '.' + file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+    
+    if file_extension not in allowed_extensions:
+        return jsonify({'error': 'Invalid file type. Only PNG, JPG, JPEG, and WEBP files are allowed.'}), 400
+
     try:
         # Read the image
         file_bytes = np.frombuffer(file.read(), np.uint8)
         img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return jsonify({'error': 'Could not read the image file. Please ensure it is a valid image.'}), 400
+            
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         # Run inference
@@ -108,7 +128,12 @@ def process_image():
         })
     
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Error processing image: {str(e)}")
+        return jsonify({'error': f'Error processing image: {str(e)}'}), 500
+
+@app.errorhandler(413)
+def too_large(e):
+    return jsonify({'error': 'File too large. Maximum size is 10MB.'}), 413
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5002, debug=True)
