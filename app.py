@@ -87,7 +87,7 @@ def process_image():
         elif total_detections <= 15:
             time = 60
         else:
-            time = 75
+            time = 80
 
         # Plot the image with detections
         plt.figure(figsize=(10, 10))
