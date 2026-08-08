@@ -4,3 +4,7 @@ __pycache__/
 
 # Ignore site-packages and virtual environment files
 traffic/lib/
+
+
+.env
+.DS_Store
