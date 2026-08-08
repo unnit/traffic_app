@@ -9,10 +9,15 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-# 2. Forcibly install CPU-only PyTorch first, then install requirements without caches
+# 1. Force install CPU-only PyTorch first
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir torch torchvision torchaudio --index-url https://pytorch.org
+
+# 2. Install your standard requirements.txt list
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 3. THE FIX: Forcibly overwrite any GUI OpenCV version with the headless server version
+RUN pip install --no-cache-dir --force-reinstall opencv-python-headless
 
 COPY . .
 
