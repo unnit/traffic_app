@@ -11,7 +11,7 @@ COPY requirements.txt .
 
 # 2. Forcibly install CPU-only PyTorch first, then install requirements without caches
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir torch torchvision torchaudio --index-url https://pytorch.org && \
+    pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt
 
 COPY . .
